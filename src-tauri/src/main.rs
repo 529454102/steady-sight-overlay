@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 use tauri::{window::Color, AppHandle, Emitter, Manager, WebviewWindow};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
+const MAIN_WINDOW_LABEL: &str = "main";
+const OVERLAY_WINDOW_LABEL: &str = "overlay";
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct OverlaySettings {
@@ -75,7 +78,27 @@ fn normalize_shortcut_identity(shortcut: &str) -> String {
     }
 }
 
+fn get_overlay_window(app: &AppHandle) -> Result<WebviewWindow, String> {
+    app.get_webview_window(OVERLAY_WINDOW_LABEL)
+        .ok_or_else(|| "overlay window was not created".to_string())
+}
+
+fn ensure_main_window(caller: &WebviewWindow) -> Result<(), String> {
+    if caller.label() == MAIN_WINDOW_LABEL {
+        Ok(())
+    } else {
+        Err("overlay commands can only be invoked from the main control window".to_string())
+    }
+}
+
 fn configure_overlay_window(overlay: &WebviewWindow) -> Result<(), String> {
+    if overlay.label() != OVERLAY_WINDOW_LABEL {
+        return Err(format!(
+            "refusing to configure non-overlay window '{}'",
+            overlay.label()
+        ));
+    }
+
     let monitor = match overlay
         .current_monitor()
         .map_err(|error| error.to_string())?
@@ -113,10 +136,13 @@ fn configure_overlay_window(overlay: &WebviewWindow) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn apply_overlay_settings(app: AppHandle, settings: OverlaySettings) -> Result<(), String> {
-    let overlay = app
-        .get_webview_window("overlay")
-        .ok_or_else(|| "overlay window was not created".to_string())?;
+fn apply_overlay_settings(
+    app: AppHandle,
+    caller: WebviewWindow,
+    settings: OverlaySettings,
+) -> Result<(), String> {
+    ensure_main_window(&caller)?;
+    let overlay = get_overlay_window(&app)?;
 
     overlay
         .emit("overlay-settings", settings.clone())
@@ -137,10 +163,9 @@ fn apply_overlay_settings(app: AppHandle, settings: OverlaySettings) -> Result<(
 }
 
 #[tauri::command]
-fn show_overlay_window(app: AppHandle) -> Result<(), String> {
-    let overlay = app
-        .get_webview_window("overlay")
-        .ok_or_else(|| "overlay window was not created".to_string())?;
+fn show_overlay_window(app: AppHandle, caller: WebviewWindow) -> Result<(), String> {
+    ensure_main_window(&caller)?;
+    let overlay = get_overlay_window(&app)?;
 
     overlay
         .set_ignore_cursor_events(true)
@@ -151,10 +176,9 @@ fn show_overlay_window(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn hide_overlay_window(app: AppHandle) -> Result<(), String> {
-    let overlay = app
-        .get_webview_window("overlay")
-        .ok_or_else(|| "overlay window was not created".to_string())?;
+fn hide_overlay_window(app: AppHandle, caller: WebviewWindow) -> Result<(), String> {
+    ensure_main_window(&caller)?;
+    let overlay = get_overlay_window(&app)?;
 
     overlay.hide().map_err(|error| error.to_string())?;
     Ok(())
@@ -163,8 +187,11 @@ fn hide_overlay_window(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 fn register_hotkeys(
     app: AppHandle,
+    caller: WebviewWindow,
     hotkeys: Vec<HotkeyBinding>,
 ) -> Result<Vec<HotkeyRegistration>, String> {
+    ensure_main_window(&caller)?;
+
     let shortcut_manager = app.global_shortcut();
     shortcut_manager
         .unregister_all()
@@ -238,7 +265,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
-            if let Some(overlay) = app.get_webview_window("overlay") {
+            if let Some(overlay) = app.get_webview_window(OVERLAY_WINDOW_LABEL) {
                 overlay.set_ignore_cursor_events(true)?;
                 configure_overlay_window(&overlay)?;
                 overlay.hide()?;
