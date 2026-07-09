@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>稳视 Overlay</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark">3D</div>
+          <div>
+            <strong>稳视 Overlay</strong>
+            <span>Anti Motion Assist</span>
+          </div>
+        </div>
+
+        <nav class="nav-list">
+          <button class="nav-item active" type="button" data-panel="controls">
+            <span class="nav-icon nav-icon-controls" aria-hidden="true"></span>
+            <span>控制</span>
+          </button>
+          <button class="nav-item" type="button" data-panel="hotkeys">
+            <span class="nav-icon nav-icon-hotkeys" aria-hidden="true"></span>
+            <span>快捷键</span>
+          </button>
+          <button class="nav-item" type="button" data-panel="system">
+            <span class="nav-icon nav-icon-system" aria-hidden="true"></span>
+            <span>系统</span>
+          </button>
+        </nav>
+
+        <div class="runtime-box">
+          <span class="runtime-dot" id="runtimeDot"></span>
+          <span id="runtimeLabel">浏览器预览</span>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">游戏悬浮辅助</p>
+            <h1>防晕眩视觉层</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="ghost-action" type="button" id="openOverlayBtn">
+              <span class="button-icon button-icon-window" aria-hidden="true"></span>
+              <span id="previewOverlayLabel">预览窗口</span>
+            </button>
+            <button class="primary-action" type="button" id="toggleOverlayBtn">
+              <span class="button-icon button-icon-power" aria-hidden="true"></span>
+              <span id="toggleOverlayLabel">启动 Overlay</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="panel-layout controls-layout active" data-panel-view="controls">
+          <div class="profile-surface">
+            <div class="section-heading">
+              <h2>配置档</h2>
+              <span class="status-pill muted">本地</span>
+            </div>
+            <div class="profile-list compact">
+              <button type="button" data-profile="soft">
+                <strong>轻缓模式</strong>
+                <span>低强度暗角</span>
+              </button>
+              <button type="button" data-profile="focus">
+                <strong>FPS 专注</strong>
+                <span>准星 + 水平线</span>
+              </button>
+              <button type="button" data-profile="strong">
+                <strong>强辅助</strong>
+                <span>网格 + 边缘框</span>
+              </button>
+              <button type="button" data-profile="reference">
+                <strong>彩色参照</strong>
+                <span>稳定杆 + 方向块</span>
+              </button>
+              <button type="button" data-profile="modeling">
+                <strong>3D 建模</strong>
+                <span>圆环 + 方向参照</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="control-surface">
+            <div class="section-heading">
+              <h2>实时控制</h2>
+              <span id="statusPill" class="status-pill">未启动</span>
+            </div>
+
+            <label class="switch-row">
+              <input type="checkbox" data-setting="enabled" />
+              <span class="switch-track" aria-hidden="true"></span>
+              <span>
+                <strong>Overlay</strong>
+                <small>透明置顶视觉层</small>
+              </span>
+            </label>
+
+            <label class="switch-row">
+              <input type="checkbox" data-setting="clickThrough" />
+              <span class="switch-track" aria-hidden="true"></span>
+              <span>
+                <strong>点击穿透</strong>
+                <small>鼠标和键盘继续交给游戏</small>
+              </span>
+            </label>
+
+            <div class="control-group">
+              <div class="field-label">视觉层</div>
+              <div class="toggle-grid">
+                <label class="check-tile">
+                  <input type="checkbox" data-setting="anchor" />
+                  <span>中心锚点</span>
+                </label>
+                <label class="check-tile">
+                  <input type="checkbox" data-setting="stabilizer" />
+                  <span>稳定参照</span>
+                </label>
+                <label class="check-tile">
+                  <input type="checkbox" data-setting="edgeMarkers" />
+                  <span>边缘方向块</span>
+                </label>
+                <label class="check-tile">
+                  <input type="checkbox" data-setting="horizon" />
+                  <span>水平线</span>
+                </label>
+                <label class="check-tile">
+                  <input type="checkbox" data-setting="vignette" />
+                  <span>暗角收缩</span>
+                </label>
+                <label class="check-tile">
+                  <input type="checkbox" data-setting="motionPulse" />
+                  <span>转向脉冲</span>
+                </label>
+                <label class="check-tile">
+                  <input type="checkbox" data-setting="grid" />
+                  <span>弱网格</span>
+                </label>
+                <label class="check-tile">
+                  <input type="checkbox" data-setting="edgeFrame" />
+                  <span>边缘框</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="control-group two-column">
+              <div class="field-group">
+                <label class="field-label" for="anchorStyle">锚点样式</label>
+                <select id="anchorStyle" data-setting="anchorStyle">
+                  <option value="dot">圆点</option>
+                  <option value="cross">准星</option>
+                  <option value="ring">圆环</option>
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="guideStyle">参照样式</label>
+                <select id="guideStyle" data-setting="guideStyle">
+                  <option value="domeCross">圆角条 + 十字</option>
+                  <option value="boxCircle">方条 + 圆环</option>
+                  <option value="edgeArrows">边缘箭头</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="control-group two-column">
+              <div class="field-group">
+                <div class="field-label">锚点颜色</div>
+                <div class="swatch-row" aria-label="锚点颜色">
+                  <button class="swatch active" type="button" data-color="#f8fafc" style="--swatch-color: #f8fafc" aria-label="白色"></button>
+                  <button class="swatch" type="button" data-color="#14b8a6" style="--swatch-color: #14b8a6" aria-label="青色"></button>
+                  <button class="swatch" type="button" data-color="#f59e0b" style="--swatch-color: #f59e0b" aria-label="琥珀色"></button>
+                  <button class="swatch" type="button" data-color="#ef4444" style="--swatch-color: #ef4444" aria-label="红色"></button>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <div class="field-label">参照颜色</div>
+                <div class="swatch-row" aria-label="参照颜色">
+                  <button class="swatch" type="button" data-guide-color="#c8b92f" style="--swatch-color: #c8b92f" aria-label="橄榄黄"></button>
+                  <button class="swatch" type="button" data-guide-color="#00d4ff" style="--swatch-color: #00d4ff" aria-label="青蓝色"></button>
+                  <button class="swatch" type="button" data-guide-color="#00e000" style="--swatch-color: #00e000" aria-label="绿色"></button>
+                  <button class="swatch" type="button" data-guide-color="#ff1515" style="--swatch-color: #ff1515" aria-label="红色"></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="slider-list compact-sliders">
+              <label class="slider-row">
+                <span>锚点尺寸</span>
+                <input type="range" min="4" max="42" step="1" data-setting="anchorSize" />
+                <output data-output="anchorSize"></output>
+              </label>
+              <label class="slider-row">
+                <span>锚点透明度</span>
+                <input type="range" min="20" max="100" step="1" data-setting="anchorOpacity" />
+                <output data-output="anchorOpacity"></output>
+              </label>
+              <label class="slider-row">
+                <span>参照透明度</span>
+                <input type="range" min="0" max="100" step="1" data-setting="guideOpacity" />
+                <output data-output="guideOpacity"></output>
+              </label>
+              <label class="slider-row">
+                <span>参照条宽</span>
+                <input type="range" min="6" max="64" step="1" data-setting="guideThickness" />
+                <output data-output="guideThickness"></output>
+              </label>
+              <label class="slider-row">
+                <span>中心留白</span>
+                <input type="range" min="7" max="28" step="1" data-setting="guideGap" />
+                <output data-output="guideGap"></output>
+              </label>
+              <label class="slider-row">
+                <span>暗角强度</span>
+                <input type="range" min="0" max="85" step="1" data-setting="vignetteStrength" />
+                <output data-output="vignetteStrength"></output>
+              </label>
+              <label class="slider-row">
+                <span>水平线透明度</span>
+                <input type="range" min="0" max="90" step="1" data-setting="horizonOpacity" />
+                <output data-output="horizonOpacity"></output>
+              </label>
+              <label class="slider-row">
+                <span>网格透明度</span>
+                <input type="range" min="0" max="70" step="1" data-setting="gridOpacity" />
+                <output data-output="gridOpacity"></output>
+              </label>
+            </div>
+          </div>
+
+          <div class="status-surface">
+            <div class="section-heading">
+              <h2>状态</h2>
+              <span class="status-pill muted">实时</span>
+            </div>
+
+            <div class="telemetry-grid stacked">
+              <div>
+                <span>运行模式</span>
+                <strong id="modeReadout">专注</strong>
+              </div>
+              <div>
+                <span>输入状态</span>
+                <strong id="clickReadout">穿透</strong>
+              </div>
+              <div>
+                <span>渲染层</span>
+                <strong id="layerReadout">隐藏</strong>
+              </div>
+            </div>
+
+            <div class="summary-list">
+              <div>
+                <span>视觉层</span>
+                <strong id="layerSummary">中心锚点、稳定参照</strong>
+              </div>
+              <div>
+                <span>锚点</span>
+                <strong id="anchorSummary">圆点 / 14px / 84%</strong>
+              </div>
+              <div>
+                <span>参照</span>
+                <strong id="guideSummary">圆角条 + 十字 / 34%</strong>
+              </div>
+              <div>
+                <span>遮罩</span>
+                <strong id="maskSummary">暗角 36%</strong>
+              </div>
+            </div>
+
+            <div class="mini-preview" aria-label="当前参照图形缩略">
+              <div class="overlay-stage preview-overlay" id="previewOverlay">
+                <div class="grid-layer"></div>
+                <div class="edge-frame"></div>
+                <div class="horizon-line"></div>
+                <div class="stability-layer">
+                  <span class="guide-bar guide-left"></span>
+                  <span class="guide-bar guide-right"></span>
+                  <span class="guide-bar guide-top"></span>
+                  <span class="guide-bar guide-bottom"></span>
+                  <span class="guide-edge edge-top"></span>
+                  <span class="guide-edge edge-right"></span>
+                  <span class="guide-edge edge-bottom"></span>
+                  <span class="guide-edge edge-left"></span>
+                </div>
+                <div class="center-anchor">
+                  <span class="anchor-dot"></span>
+                  <span class="anchor-ring"></span>
+                  <span class="anchor-cross horizontal"></span>
+                  <span class="anchor-cross vertical"></span>
+                </div>
+                <div class="vignette-layer"></div>
+              </div>
+            </div>
+
+            <div class="action-stack">
+              <button class="ghost-action full" type="button" data-panel-shortcut="hotkeys">
+                <span class="button-icon button-icon-hotkeys" aria-hidden="true"></span>
+                <span>快捷键</span>
+              </button>
+              <button class="ghost-action full" type="button" data-panel-shortcut="system">
+                <span class="button-icon button-icon-system" aria-hidden="true"></span>
+                <span>系统状态</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-layout hotkey-layout" data-panel-view="hotkeys">
+          <div class="control-surface wide">
+            <div class="section-heading">
+              <h2>快捷键</h2>
+              <span id="hotkeyStatusPill" class="status-pill muted">待注册</span>
+            </div>
+            <div class="hotkey-editor" id="hotkeyEditor"></div>
+            <div class="hotkey-footer">
+              <button class="ghost-action" type="button" id="resetHotkeysBtn">
+                <span class="button-icon button-icon-reset" aria-hidden="true"></span>
+                <span>恢复默认</span>
+              </button>
+              <span>录制时按 Esc 取消，清除后该动作不占用全局键位。</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-layout" data-panel-view="system">
+          <div class="control-surface wide">
+            <div class="section-heading">
+              <h2>桌面层状态</h2>
+              <span class="status-pill muted">macOS / Windows</span>
+            </div>
+            <div class="system-grid">
+              <div>
+                <span>窗口策略</span>
+                <strong>透明、置顶、无边框</strong>
+              </div>
+              <div>
+                <span>游戏模式</span>
+                <strong>优先适配无边框窗口化</strong>
+              </div>
+              <div>
+                <span>画面注入</span>
+                <strong>不注入游戏进程</strong>
+              </div>
+              <div>
+                <span>反作弊风险</span>
+                <strong>低风险 overlay 路线</strong>
+              </div>
+            </div>
+            <div class="roadmap-grid">
+              <div>
+                <span>全屏尺寸同步</span>
+                <strong>已完成</strong>
+              </div>
+              <div>
+                <span>真实预览开关</span>
+                <strong>已完成</strong>
+              </div>
+              <div>
+                <span>动态暗角触发</span>
+                <strong>规划中</strong>
+              </div>
+              <div>
+                <span>可编辑快捷键</span>
+                <strong>已完成</strong>
+              </div>
+              <div>
+                <span>按游戏自动配置</span>
+                <strong>需进程检测</strong>
+              </div>
+              <div>
+                <span>打包安装器</span>
+                <strong>待发布</strong>
+              </div>
+            </div>
+            <ol class="event-log" id="eventLog" aria-label="状态日志"></ol>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
